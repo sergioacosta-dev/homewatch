@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HomeWatch</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <div class="container">
+    <h1>HomeWatch</h1>
+    <p class="subtitle">Network Security Monitor</p>
+
+    <!-- Scan form -->
+    <form action="/scan" method="POST" class="scan-form">
+      <input
+        type="text"
+        name="target"
+        placeholder="Target IP (e.g. 192.168.1.42)"
+        value="{{ target }}"
+        required
+      >
+      <button type="submit">Scan Now</button>
+    </form>
+
+    <!-- New port alerts -->
+    {% if new_ports %}
+    <div class="alert">
+      <strong>Alert:</strong> {{ new_ports | length }} new port(s) detected since last scan:
+      {% for p in new_ports %}
+        <span class="badge new">{{ p.port }}/{{ p.protocol }} ({{ p.service }})</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Current scan results -->
+    {% if current_scan %}
+    <div class="card">
+      <h2>Latest Scan — {{ target }}</h2>
+      <p>Status: <strong>{{ current_scan.status }}</strong> &nbsp;|&nbsp; Scanned: {{ current_scan.scanned_at }}</p>
+
+      {% if current_scan.ports %}
+      <table>
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Protocol</th>
+            <th>Service</th>
+            <th>Version</th>
+            <th>State</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for port in current_scan.ports %}
+          <tr {% if port in new_ports %}class="new-row"{% endif %}>
+            <td>{{ port.port }}</td>
+            <td>{{ port.protocol }}</td>
+            <td>{{ port.service }}</td>
+            <td>{{ port.version }}</td>
+            <td><span class="badge open">{{ port.state }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>No open ports detected.</p>
+      {% endif %}
+    </div>
+
+    <!-- Scan history -->
+    {% if scans | length > 1 %}
+    <div class="card">
+      <h2>Scan History</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Open Ports</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in scans %}
+          <tr>
+            <td>{{ scan.scanned_at }}</td>
+            <td>{{ scan.status }}</td>
+            <td>
+              {% for p in scan.ports %}
+                <span class="badge">{{ p.port }}/{{ p.protocol }}</span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% elif target %}
+    <div class="card">
+      <p>No scans yet for {{ target }}. Click "Scan Now" to start.</p>
+    </div>
+    {% endif %}
+
+  </div>
+
+</body>
+</html>
