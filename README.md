@@ -49,3 +49,7 @@ Open `http://localhost:5000` in your browser.
 - **IT:** IP addressing, SSH configuration, static networking, firewall rules (UFW)
 - **Cybersecurity:** Port scanning, service enumeration, attack surface monitoring, change detection
 - **Development:** Python scripting, Flask web apps, SQLite, Git workflow, project documentation
+
+## Screenshots
+
+<img width="1533" height="311" alt="Screenshot 2026-04-19 173847" src="https://github.com/user-attachments/assets/93db944d-c75b-4f8b-a1eb-c4ab3eacde52" />
