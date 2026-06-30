@@ -1,5 +1,6 @@
 import logging
 import ipaddress
+from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
@@ -140,8 +141,8 @@ def run_scan():
 @login_required
 def run_network_scan():
     log.info('Manual network scan triggered')
-    scheduled_scan()
-    return redirect(url_for('index'))
+    scheduler.modify_job('network_scan', next_run_time=datetime.now())
+    return redirect(url_for('index', scanning=1))
 
 
 if __name__ == '__main__':

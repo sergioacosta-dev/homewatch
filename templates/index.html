@@ -27,6 +27,13 @@
       <button type="submit">Scan Now</button>
     </form>
 
+    <!-- Scan in progress banner -->
+    {% if request.args.get('scanning') %}
+    <div class="alert" style="background: #eff6ff; border-color: #3b82f6;">
+      <strong>Scan triggered.</strong> Network sweep running in the background — refresh in ~30 seconds.
+    </div>
+    {% endif %}
+
     <!-- New port alerts (manual scan) -->
     {% if new_ports %}
     <div class="alert">
