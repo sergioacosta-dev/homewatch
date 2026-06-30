@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import scanner
 import db
 import config
+import alerts
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 log = logging.getLogger(__name__)
@@ -38,7 +39,14 @@ def scheduled_scan():
     try:
         results = scanner.scan_network(config.SUBNET)
         for result in results:
+            previous = db.get_previous_ports(result['target'])
+            previous_port_numbers = {p['port'] for p in previous}
             db.save_scan(result['target'], result['status'], result['ports'])
+            if previous:
+                new_ports = [p for p in result['ports'] if p['port'] not in previous_port_numbers]
+                if new_ports:
+                    log.info('New ports on %s: %s', result['target'], new_ports)
+                    alerts.alert_new_ports(result['target'], new_ports)
         log.info('Scheduled scan complete: %d hosts', len(results))
     except Exception as e:
         log.error('Scheduled scan failed: %s', e)
