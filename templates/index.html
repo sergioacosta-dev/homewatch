@@ -9,21 +9,25 @@
 
   <div class="container">
     <h1>HomeWatch</h1>
-    <p class="subtitle">Network Security Monitor</p>
+    <p class="subtitle">Network Security Monitor — 192.168.12.0/24</p>
 
-    <!-- Scan form -->
+    <!-- Scan network button -->
+    <form action="/scan-network" method="POST" style="margin-bottom: 1rem;">
+      <button type="submit" class="btn-network">Scan Network Now</button>
+    </form>
+
+    <!-- Manual scan form -->
     <form action="/scan" method="POST" class="scan-form">
       <input
         type="text"
         name="target"
-        placeholder="Target IP (e.g. 192.168.1.42)"
+        placeholder="Scan a specific IP e.g. 192.168.12.110"
         value="{{ target }}"
-        required
       >
       <button type="submit">Scan Now</button>
     </form>
 
-    <!-- New port alerts -->
+    <!-- New port alerts (manual scan) -->
     {% if new_ports %}
     <div class="alert">
       <strong>Alert:</strong> {{ new_ports | length }} new port(s) detected since last scan:
@@ -33,7 +37,49 @@
     </div>
     {% endif %}
 
-    <!-- Current scan results -->
+    <!-- All hosts overview (home page) -->
+    {% if all_hosts %}
+    <div class="card">
+      <h2>Network Overview</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Host</th>
+            <th>Status</th>
+            <th>Open Ports</th>
+            <th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for host in all_hosts %}
+          <tr>
+            <td><a href="/?target={{ host.target }}">{{ host.target }}</a></td>
+            <td>
+              <span class="badge {{ 'open' if host.status == 'up' else 'down' }}">
+                {{ host.status }}
+              </span>
+            </td>
+            <td>
+              {% for p in host.ports %}
+                <span class="badge">{{ p.port }}/{{ p.protocol }}</span>
+              {% endfor %}
+              {% if not host.ports %}
+                <span class="badge">none</span>
+              {% endif %}
+            </td>
+            <td class="muted">{{ host.scanned_at[:16] | replace('T', ' ') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% elif not target %}
+    <div class="card">
+      <p>No scan data yet. Waiting for first scheduled scan, or enter an IP above to scan now.</p>
+    </div>
+    {% endif %}
+
+    <!-- Single host detail (after manual scan or ?target=) -->
     {% if current_scan %}
     <div class="card">
       <h2>Latest Scan — {{ target }}</h2>
@@ -67,7 +113,6 @@
       {% endif %}
     </div>
 
-    <!-- Scan history -->
     {% if scans | length > 1 %}
     <div class="card">
       <h2>Scan History</h2>
@@ -82,7 +127,7 @@
         <tbody>
           {% for scan in scans %}
           <tr>
-            <td>{{ scan.scanned_at }}</td>
+            <td>{{ scan.scanned_at[:16] | replace('T', ' ') }}</td>
             <td>{{ scan.status }}</td>
             <td>
               {% for p in scan.ports %}
@@ -95,11 +140,6 @@
       </table>
     </div>
     {% endif %}
-
-    {% elif target %}
-    <div class="card">
-      <p>No scans yet for {{ target }}. Click "Scan Now" to start.</p>
-    </div>
     {% endif %}
 
   </div>

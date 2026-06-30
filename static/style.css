@@ -112,3 +112,7 @@ tr.new-row { background: #fefce8; }
 
 .badge.open { background: #dcfce7; color: #166534; }
 .badge.new  { background: #fef3c7; color: #92400e; }
+.badge.down { background: #fee2e2; color: #991b1b; }
+.muted { color: #94a3b8; font-size: 0.85rem; }
+.btn-network { padding: 0.6rem 1.25rem; background: #0f172a; color: white; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer; }
+.btn-network:hover { background: #1e293b; }

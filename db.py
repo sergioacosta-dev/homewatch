@@ -1,4 +1,5 @@
 import sqlite3
+import json
 from datetime import datetime
 
 DB_PATH = 'homewatch.db'
@@ -6,12 +7,11 @@ DB_PATH = 'homewatch.db'
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # lets us access columns by name
+    conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db():
-    """Create tables if they don't exist."""
     conn = get_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS scans (
@@ -27,8 +27,6 @@ def init_db():
 
 
 def save_scan(target, status, ports):
-    """Save a scan result to the database."""
-    import json
     conn = get_connection()
     conn.execute(
         'INSERT INTO scans (target, scanned_at, status, ports_json) VALUES (?, ?, ?, ?)',
@@ -39,8 +37,6 @@ def save_scan(target, status, ports):
 
 
 def get_recent_scans(target, limit=10):
-    """Get the N most recent scans for a target."""
-    import json
     conn = get_connection()
     rows = conn.execute(
         'SELECT * FROM scans WHERE target = ? ORDER BY scanned_at DESC LIMIT ?',
@@ -48,21 +44,19 @@ def get_recent_scans(target, limit=10):
     ).fetchall()
     conn.close()
 
-    scans = []
-    for row in rows:
-        scans.append({
+    return [
+        {
             'id': row['id'],
             'target': row['target'],
             'scanned_at': row['scanned_at'],
             'status': row['status'],
             'ports': json.loads(row['ports_json'])
-        })
-    return scans
+        }
+        for row in rows
+    ]
 
 
 def get_previous_ports(target):
-    """Get the port list from the scan before the most recent one."""
-    import json
     conn = get_connection()
     rows = conn.execute(
         'SELECT ports_json FROM scans WHERE target = ? ORDER BY scanned_at DESC LIMIT 2',
@@ -73,3 +67,28 @@ def get_previous_ports(target):
     if len(rows) < 2:
         return []
     return json.loads(rows[1]['ports_json'])
+
+
+def get_all_latest_scans():
+    conn = get_connection()
+    rows = conn.execute('''
+        SELECT s.* FROM scans s
+        INNER JOIN (
+            SELECT target, MAX(scanned_at) AS latest
+            FROM scans
+            GROUP BY target
+        ) t ON s.target = t.target AND s.scanned_at = t.latest
+        ORDER BY s.target
+    ''').fetchall()
+    conn.close()
+
+    return [
+        {
+            'id': row['id'],
+            'target': row['target'],
+            'scanned_at': row['scanned_at'],
+            'status': row['status'],
+            'ports': json.loads(row['ports_json'])
+        }
+        for row in rows
+    ]
