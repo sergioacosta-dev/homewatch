@@ -11,3 +11,10 @@ SMTP_FROM = os.environ.get('SMTP_FROM', '')
 SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 ALERT_EMAIL_TO = os.environ.get('ALERT_EMAIL_TO', '')
 NTFY_TOPIC = os.environ.get('NTFY_TOPIC', '')
+
+NICKNAMES = {
+    '192.168.12.1':   'Router',
+    '192.168.12.110': 'Kali Desktop',
+    '192.168.12.143': 'Windows PC',
+    '192.168.12.153': 'Laptop',
+}

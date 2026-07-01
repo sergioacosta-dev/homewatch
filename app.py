@@ -92,7 +92,8 @@ def index():
             current_scan=current_scan,
             scans=scans,
             new_ports=[],
-            all_hosts=[]
+            all_hosts=[],
+            nicknames=config.NICKNAMES
         )
 
     all_hosts = db.get_all_latest_scans()
@@ -102,7 +103,8 @@ def index():
         current_scan=None,
         scans=[],
         new_ports=[],
-        all_hosts=all_hosts
+        all_hosts=all_hosts,
+        nicknames=config.NICKNAMES
     )
 
 
@@ -133,7 +135,8 @@ def run_scan():
         current_scan=current_scan,
         scans=scans,
         new_ports=new_ports,
-        all_hosts=[]
+        all_hosts=[],
+        nicknames=config.NICKNAMES
     )
 
 

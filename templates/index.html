@@ -60,7 +60,16 @@
         <tbody>
           {% for host in all_hosts %}
           <tr>
-            <td><a href="/?target={{ host.target }}">{{ host.target }}</a></td>
+            <td>
+              <a href="/?target={{ host.target }}">
+                {% if host.target in nicknames %}
+                  <strong>{{ nicknames[host.target] }}</strong><br>
+                  <span class="muted">{{ host.target }}</span>
+                {% else %}
+                  {{ host.target }}
+                {% endif %}
+              </a>
+            </td>
             <td>
               <span class="badge {{ 'open' if host.status == 'up' else 'down' }}">
                 {{ host.status }}
