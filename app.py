@@ -97,6 +97,8 @@ def index():
         )
 
     all_hosts = db.get_all_latest_scans()
+    for host in all_hosts:
+        host['hostname'] = scanner.resolve_hostname(host['target'])
     return render_template(
         'index.html',
         target='',

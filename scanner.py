@@ -1,5 +1,6 @@
 import nmap
 import json
+import socket
 from datetime import datetime
 
 
@@ -66,3 +67,10 @@ if __name__ == '__main__':
     else:
         result = scan_host(target)
         print(json.dumps(result, indent=2))
+
+
+def resolve_hostname(ip):
+    try:
+        return socket.gethostbyaddr(ip)[0]
+    except (socket.herror, socket.gaierror):
+        return None

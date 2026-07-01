@@ -65,8 +65,14 @@
                 {% if host.target in nicknames %}
                   <strong>{{ nicknames[host.target] }}</strong><br>
                   <span class="muted">{{ host.target }}</span>
+                  {% if host.hostname and host.hostname != host.target %}
+                    <span class="muted"> · {{ host.hostname }}</span>
+                  {% endif %}
                 {% else %}
-                  {{ host.target }}
+                  {{ host.target }}<br>
+                  {% if host.hostname and host.hostname != host.target %}
+                    <span class="muted">{{ host.hostname }}</span>
+                  {% endif %}
                 {% endif %}
               </a>
             </td>
