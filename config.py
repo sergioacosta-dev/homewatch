@@ -12,6 +12,14 @@ SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 ALERT_EMAIL_TO = os.environ.get('ALERT_EMAIL_TO', '')
 NTFY_TOPIC = os.environ.get('NTFY_TOPIC', '')
 
+_REQUIRED = ('SECRET_KEY', 'AUTH_USERNAME', 'AUTH_PASSWORD_HASH')
+_missing = [name for name in _REQUIRED if not globals()[name]]
+if _missing:
+    raise RuntimeError(
+        f"Missing required environment variable(s): {', '.join(_missing)}. "
+        f"Set them in homewatch.env (see homewatch.env.example)."
+    )
+
 NICKNAMES = {
     '192.168.12.1':   'Router',
     '192.168.12.110': 'Kali Desktop',
