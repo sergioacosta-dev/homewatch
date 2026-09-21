@@ -1,8 +1,10 @@
+import hmac
 import logging
 import ipaddress
-from datetime import datetime
+import secrets
+from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, abort
 from werkzeug.security import check_password_hash
 from apscheduler.schedulers.background import BackgroundScheduler
 import scanner
@@ -15,7 +17,29 @@ log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 db.init_db()
+
+LOGIN_MAX_ATTEMPTS = 10
+LOGIN_WINDOW_MINUTES = 15
+
+SUBNET_NETWORK = ipaddress.ip_network(config.SUBNET)
+
+
+@app.context_processor
+def inject_csrf_token():
+    return {'csrf_token': session.get('csrf_token', '')}
+
+
+def check_csrf(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.form.get('csrf_token', '')
+        if not token or not hmac.compare_digest(token, session.get('csrf_token', '')):
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated
 
 
 def login_required(f):
@@ -29,8 +53,7 @@ def login_required(f):
 
 def valid_ip(value):
     try:
-        ipaddress.ip_address(value)
-        return True
+        return ipaddress.ip_address(value) in SUBNET_NETWORK
     except ValueError:
         return False
 
@@ -41,9 +64,9 @@ def scheduled_scan():
         results = scanner.scan_network(config.SUBNET)
         for result in results:
             previous = db.get_previous_ports(result['target'])
-            previous_port_numbers = {p['port'] for p in previous}
+            previous_port_numbers = {p['port'] for p in previous} if previous is not None else set()
             db.save_scan(result['target'], result['status'], result['ports'])
-            if previous:
+            if previous is not None:
                 new_ports = [p for p in result['ports'] if p['port'] not in previous_port_numbers]
                 if new_ports:
                     log.info('New ports on %s: %s', result['target'], new_ports)
@@ -62,13 +85,23 @@ scheduler.start()
 def login():
     error = None
     if request.method == 'POST':
+        ip = request.remote_addr
+        if db.count_recent_login_failures(ip, LOGIN_WINDOW_MINUTES) >= LOGIN_MAX_ATTEMPTS:
+            error = 'Too many failed attempts. Try again later.'
+            log.warning('Login blocked (rate limit) from %s', ip)
+            return render_template('login.html', error=error)
+
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        if username == config.AUTH_USERNAME and check_password_hash(config.AUTH_PASSWORD_HASH, password):
+        username_match = hmac.compare_digest(username, config.AUTH_USERNAME)
+        if username_match and check_password_hash(config.AUTH_PASSWORD_HASH, password):
+            session.permanent = True
             session['logged_in'] = True
+            session['csrf_token'] = secrets.token_hex(16)
             return redirect(url_for('index'))
         error = 'Invalid credentials'
-        log.warning('Failed login attempt from %s', request.remote_addr)
+        db.record_login_failure(ip)
+        log.warning('Failed login attempt from %s', ip)
     return render_template('login.html', error=error)
 
 
@@ -112,6 +145,7 @@ def index():
 
 @app.route('/scan', methods=['POST'])
 @login_required
+@check_csrf
 def run_scan():
     target = request.form.get('target', '').strip()
 
@@ -119,7 +153,7 @@ def run_scan():
         return redirect(url_for('index'))
 
     previous_ports = db.get_previous_ports(target)
-    previous_port_numbers = {p['port'] for p in previous_ports}
+    previous_port_numbers = {p['port'] for p in previous_ports} if previous_ports is not None else set()
 
     result = scanner.scan_host(target)
     db.save_scan(target, result['status'], result['ports'])
@@ -144,6 +178,7 @@ def run_scan():
 
 @app.route('/scan-network', methods=['POST'])
 @login_required
+@check_csrf
 def run_network_scan():
     log.info('Manual network scan triggered')
     scheduler.modify_job('network_scan', next_run_time=datetime.now())

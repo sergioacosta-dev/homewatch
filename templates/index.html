@@ -13,11 +13,13 @@
 
     <!-- Scan network button -->
     <form action="/scan-network" method="POST" style="margin-bottom: 1rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <button type="submit" class="btn-network">Scan Network Now</button>
     </form>
 
     <!-- Manual scan form -->
     <form action="/scan" method="POST" class="scan-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input
         type="text"
         name="target"

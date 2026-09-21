@@ -24,9 +24,7 @@ To help triage quickly, please include:
 
 ## Scope
 
-This covers the Flask app, its authentication, and the network-scanning logic. Note: this is a self-hosted home-network tool, not exposed to the public internet — reports should focus on the code, not a live instance.
-
-This project has no live deployment. Reports are limited to the source code itself.
+This covers the Flask app, its authentication, and the network-scanning logic. Note: this is a self-hosted home-network tool, running on a private Tailscale/LAN network and not exposed to the public internet — reports should focus on the code, since the live instance is not reachable from the outside.
 
 **Out of scope:**
 - Vulnerabilities requiring physical access to a device
