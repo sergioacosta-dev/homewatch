@@ -4,12 +4,12 @@ import socket
 from datetime import datetime
 
 
-PORT_LIST = '22,80,135,443,445,3000,3389,5000,5001,8080,8443,11434,27036'
+TOP_PORTS = 1000  # nmap's built-in --top-ports N; widened 2026-09-29 from a fixed 13-port allowlist
 
 
 def scan_host(target_ip):
     nm = nmap.PortScanner()
-    nm.scan(hosts=target_ip, arguments=f'-p {PORT_LIST} -T4')
+    nm.scan(hosts=target_ip, arguments=f'--top-ports {TOP_PORTS} -T4')
 
     result = {
         'target': target_ip,
